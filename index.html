@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>HUMDIINGER Secure Payment</title>
+
+  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      width: 90%;
+      max-width: 420px;
+      background: #1b1b1b;
+      border-radius: 18px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 10px 35px rgba(0,0,0,.35);
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 26px;
+    }
+
+    p {
+      color: #ccc;
+      line-height: 1.5;
+    }
+
+    .status {
+      margin-top: 24px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #262626;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 15px;
+      border: 0;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h1>HUMDIINGER</h1>
+
+  <p>Secure Online Payment</p>
+
+  <div id="status" class="status">
+    Preparing your secure payment…
+  </div>
+
+  <button id="retryBtn" style="display:none;">
+    Retry Payment
+  </button>
+
+</div>
+
+
+<script>
+
+let paymentData = null;
+
+function readPaymentDetails() {
+
+  const hash =
+    window.location.hash.startsWith("#")
+      ? window.location.hash.substring(1)
+      : window.location.hash;
+
+  const params = new URLSearchParams(hash);
+
+  return {
+    sessionId:
+      params.get("payment_session_id"),
+
+    env:
+      params.get("env") || "sandbox",
+
+    webOrderId:
+      params.get("web_order_id")
+  };
+}
+
+
+async function startPayment() {
+
+  const status =
+    document.getElementById("status");
+
+  const retry =
+    document.getElementById("retryBtn");
+
+  try {
+
+    paymentData = readPaymentDetails();
+
+    if (!paymentData.sessionId) {
+      throw new Error(
+        "Payment session information is missing."
+      );
+    }
+
+    status.innerHTML =
+      "Opening secure payment…";
+
+    const cashfree = Cashfree({
+      mode:
+        paymentData.env === "production"
+          ? "production"
+          : "sandbox"
+    });
+
+    await cashfree.checkout({
+      paymentSessionId:
+        paymentData.sessionId,
+
+      redirectTarget:
+        "_self"
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.innerHTML =
+      "We could not open the payment page.<br><br>" +
+      "Please retry or return to HUMDIINGER.";
+
+    retry.style.display = "block";
+  }
+}
+
+
+document
+  .getElementById("retryBtn")
+  .addEventListener(
+    "click",
+    startPayment
+  );
+
+
+window.addEventListener(
+  "load",
+  startPayment
+);
+
+</script>
+
+</body>
+</html>
